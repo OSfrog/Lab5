@@ -8,24 +8,19 @@ using System.Windows.Forms;
 
 namespace ImageScraper
 {
-    public enum FileTypes
-    {
-        png = 1,
-        jpg,
-        jpeg,
-
-    }
     public partial class mainForm : Form
     {
         public List<string> ImageURLs = new List<string>();
         public mainForm()
         {
             InitializeComponent();
-            Pattern = new Regex("(?<=<img\\s[^>]*?src=\")[^\"]*");
+            UrlPattern = new Regex("<img.*src=\"(.*\\.(jpg|jpeg|png|gif|bmp).*)\"\\s");
+            FileExtensionPattern = new Regex("\\.(jpg|jpeg|png|gif|bmp)");
         }
 
-        public Regex Pattern { get; set; }
-        public List<Task<byte[]>> TaskList { get; set; } = new List<Task<byte[]>>();
+        public Regex UrlPattern { get; set; }
+        public Regex FileExtensionPattern { get; set; }
+        public Dictionary<Task<byte[]>, string> TaskDictionary { get; set; } = new Dictionary<Task<byte[]>, string>();
 
         private async void buttonSearch_Click(object sender, EventArgs e)
         {
@@ -60,28 +55,30 @@ namespace ImageScraper
             if (!textBoxSearch.Text.Contains("http://") &&
                 !string.IsNullOrWhiteSpace(textBoxSearch.Text))
             {
-                var client = new HttpClient();
+                using var client = new HttpClient();
+                client.Timeout = TimeSpan.FromMinutes(1);
 
                 var downloadedHTMLCode = client.GetStringAsync($"http://{textBoxSearch.Text}");
                 await downloadedHTMLCode;
 
-                var matches = Pattern.Matches(downloadedHTMLCode.Result);
+                var matches = UrlPattern.Matches(downloadedHTMLCode.Result);
 
-                foreach (var match in matches)
+
+                foreach (Match match in matches)
                 {
-                    if (!match.ToString().Contains("http") &&
+                    if (!match.Groups[1].ToString().Contains("http") &&
                         !string.IsNullOrWhiteSpace(match.ToString()))
                     {
-                        var result = $"http://{textBoxSearch.Text}{match}{Environment.NewLine}";
+                        var result = $"http://{textBoxSearch.Text}{match.Groups[1]}{Environment.NewLine}";
                         textBoxResults.Text += result;
 
-                        ImageURLs.Add($"http://{textBoxSearch.Text}{match}");
+                        ImageURLs.Add($"http://{textBoxSearch.Text}{match.Groups[1]}");
                     }
-                    else if (!string.IsNullOrWhiteSpace(match.ToString()))
+                    else if (!string.IsNullOrWhiteSpace(match.Groups[1].ToString()))
                     {
-                        textBoxResults.Text += $"{match} {Environment.NewLine}";
+                        textBoxResults.Text += $"{match.Groups[1]} {Environment.NewLine}";
 
-                        ImageURLs.Add($"{match}");
+                        ImageURLs.Add($"{match.Groups[1]}");
                     }
                 }
             }
@@ -89,25 +86,28 @@ namespace ImageScraper
 
         private async Task DownloadImagesAsync(string[] imagearray)
         {
-            var client = new HttpClient();
+            using var client = new HttpClient();
 
             foreach (var image in imagearray)
             {
-                 TaskList.Add(client.GetByteArrayAsync(image));
+                var match = FileExtensionPattern.Matches(image);
+                TaskDictionary.Add(client.GetByteArrayAsync(image), match[0].Value);
             }
         }
 
         private async Task SaveImages(string path)
         {
+            var tasks = TaskDictionary.Keys;
             var i = 1;
-            while (TaskList.Count > 0)
+            while (TaskDictionary.Count > 0)
             {
-                var completedTask =  await Task.WhenAny(TaskList);
+                var completedTask = await Task.WhenAny(tasks);
+                var fileExtension = TaskDictionary[completedTask];
                 var result = await completedTask;
-                using var fileStream = new FileStream($"{path}\\image{i}.jpg", FileMode.Create);
+                using var fileStream = new FileStream($"{path}\\image{i}{fileExtension}", FileMode.Create);
                 await fileStream.WriteAsync(result, 0, result.Length);
                 i++;
-                TaskList.Remove(completedTask);
+                TaskDictionary.Remove(completedTask);
             }
         }
     }
