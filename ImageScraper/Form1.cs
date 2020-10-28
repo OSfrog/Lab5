@@ -8,6 +8,13 @@ using System.Windows.Forms;
 
 namespace ImageScraper
 {
+    public enum FileTypes
+    {
+        png = 1,
+        jpg,
+        jpeg,
+
+    }
     public partial class mainForm : Form
     {
         public List<string> ImageURLs = new List<string>();
@@ -18,13 +25,11 @@ namespace ImageScraper
         }
 
         public Regex Pattern { get; set; }
-        public List<byte[]> ByteList { get; set; }
-        public List<Task<byte[]>> TaskList { get; set; }
+        public List<Task<byte[]>> TaskList { get; set; } = new List<Task<byte[]>>();
 
         private async void buttonSearch_Click(object sender, EventArgs e)
         {
             var downloadTask = DownloadHTML();
-            await downloadTask;
         }
 
         private void textBoxResults_TextChanged(object sender, EventArgs e)
@@ -93,10 +98,12 @@ namespace ImageScraper
         private async Task DownloadImagesAsync(string[] imagearray)
         {
             var client = new HttpClient();
+
             foreach (var image in imagearray)
             {
-                TaskList.Add(client.GetByteArrayAsync(image));
+                 TaskList.Add(client.GetByteArrayAsync(image));
             }
+
         }
 
         private async Task SaveImages(string path)
@@ -104,12 +111,12 @@ namespace ImageScraper
             var i = 1;
             while (TaskList.Count > 0)
             {
-                Task <byte[]> completedTask = await Task.WhenAny(TaskList);
+                var completedTask =  await Task.WhenAny(TaskList);
+                var result = await completedTask;
                 var fileStream = new FileStream($"{path}\\image{i}", FileMode.Create);
-                await fileStream.WriteAsync(completedTask.Result, 0, completedTask.Result.Length);
+                await fileStream.WriteAsync(result, 0, result.Length);
                 i++;
-
-
+                TaskList.Remove(completedTask);
             }
         }
     }
