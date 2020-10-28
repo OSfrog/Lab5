@@ -37,14 +37,7 @@ namespace ImageScraper
             var result = textBoxResults.Lines.Length == 0 ? $"No images found." :
                 $"{textBoxResults.Lines.Length} images found.";
 
-            if (textBoxResults.Lines.Length != 0)
-            {
-                buttonSave.Enabled = true;
-            }
-            else
-            {
-                buttonSave.Enabled = false;
-            }
+            buttonSave.Enabled = textBoxResults.Lines.Length != 0;
             labelImages.Visible = true;
             labelImages.Text = result;
         }
@@ -68,12 +61,11 @@ namespace ImageScraper
                 !string.IsNullOrWhiteSpace(textBoxSearch.Text))
             {
                 var client = new HttpClient();
-                Task<string> downloadHTML = null;
 
-                downloadHTML = client.GetStringAsync($"http://{textBoxSearch.Text}");
-                await downloadHTML;
+                var downloadedHTMLCode = client.GetStringAsync($"http://{textBoxSearch.Text}");
+                await downloadedHTMLCode;
 
-                var matches = Pattern.Matches(downloadHTML.Result);
+                var matches = Pattern.Matches(downloadedHTMLCode.Result);
 
                 foreach (var match in matches)
                 {
@@ -103,7 +95,6 @@ namespace ImageScraper
             {
                  TaskList.Add(client.GetByteArrayAsync(image));
             }
-
         }
 
         private async Task SaveImages(string path)
@@ -113,7 +104,7 @@ namespace ImageScraper
             {
                 var completedTask =  await Task.WhenAny(TaskList);
                 var result = await completedTask;
-                var fileStream = new FileStream($"{path}\\image{i}", FileMode.Create);
+                using var fileStream = new FileStream($"{path}\\image{i}.jpg", FileMode.Create);
                 await fileStream.WriteAsync(result, 0, result.Length);
                 i++;
                 TaskList.Remove(completedTask);

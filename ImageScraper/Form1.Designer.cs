@@ -33,7 +33,6 @@
             this.textBoxResults = new System.Windows.Forms.TextBox();
             this.buttonSearch = new System.Windows.Forms.Button();
             this.buttonSave = new System.Windows.Forms.Button();
-            this.progressBar = new System.Windows.Forms.ProgressBar();
             this.SuspendLayout();
             // 
             // labelImages
@@ -93,20 +92,12 @@
             this.buttonSave.UseVisualStyleBackColor = true;
             this.buttonSave.Click += new System.EventHandler(this.buttonSave_Click);
             // 
-            // progressBar
-            // 
-            this.progressBar.Location = new System.Drawing.Point(110, 425);
-            this.progressBar.Name = "progressBar";
-            this.progressBar.Size = new System.Drawing.Size(100, 13);
-            this.progressBar.TabIndex = 5;
-            // 
             // mainForm
             // 
             this.AcceptButton = this.buttonSearch;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
-            this.Controls.Add(this.progressBar);
             this.Controls.Add(this.buttonSave);
             this.Controls.Add(this.buttonSearch);
             this.Controls.Add(this.textBoxResults);
@@ -127,7 +118,6 @@
         private System.Windows.Forms.TextBox textBoxResults;
         private System.Windows.Forms.Button buttonSearch;
         private System.Windows.Forms.Button buttonSave;
-        private System.Windows.Forms.ProgressBar progressBar;
     }
 }
 
