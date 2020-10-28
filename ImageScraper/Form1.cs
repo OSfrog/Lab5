@@ -55,7 +55,7 @@ namespace ImageScraper
             if (!textBoxSearch.Text.Contains("http://") &&
                 !string.IsNullOrWhiteSpace(textBoxSearch.Text))
             {
-                using var client = new HttpClient();
+                 var client = new HttpClient();
                 client.Timeout = TimeSpan.FromMinutes(1);
 
                 var downloadedHTMLCode = client.GetStringAsync($"http://{textBoxSearch.Text}");
@@ -86,7 +86,7 @@ namespace ImageScraper
 
         private async Task DownloadImagesAsync(string[] imagearray)
         {
-            using var client = new HttpClient();
+             var client = new HttpClient();
 
             foreach (var image in imagearray)
             {
@@ -97,14 +97,15 @@ namespace ImageScraper
 
         private async Task SaveImages(string path)
         {
-            var tasks = TaskDictionary.Keys;
             var i = 1;
+            var tasks = TaskDictionary.Keys;
+
             while (TaskDictionary.Count > 0)
             {
                 var completedTask = await Task.WhenAny(tasks);
                 var fileExtension = TaskDictionary[completedTask];
                 var result = await completedTask;
-                using var fileStream = new FileStream($"{path}\\image{i}{fileExtension}", FileMode.Create);
+                var fileStream = new FileStream($"{path}\\image{i}{fileExtension}", FileMode.Create);
                 await fileStream.WriteAsync(result, 0, result.Length);
                 i++;
                 TaskDictionary.Remove(completedTask);
