@@ -44,6 +44,7 @@
             this.labelImages.Size = new System.Drawing.Size(90, 13);
             this.labelImages.TabIndex = 0;
             this.labelImages.Text = "No images found.";
+            this.labelImages.Visible = false;
             // 
             // textBoxSearch
             // 
@@ -65,13 +66,14 @@
             this.textBoxResults.ScrollBars = System.Windows.Forms.ScrollBars.Both;
             this.textBoxResults.Size = new System.Drawing.Size(791, 366);
             this.textBoxResults.TabIndex = 2;
+            this.textBoxResults.TextChanged += new System.EventHandler(this.textBoxResults_TextChanged);
             // 
             // buttonSearch
             // 
             this.buttonSearch.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.buttonSearch.Location = new System.Drawing.Point(719, 10);
             this.buttonSearch.Name = "buttonSearch";
-            this.buttonSearch.Size = new System.Drawing.Size(75, 23);
+            this.buttonSearch.Size = new System.Drawing.Size(75, 20);
             this.buttonSearch.TabIndex = 3;
             this.buttonSearch.Text = "Search";
             this.buttonSearch.UseVisualStyleBackColor = true;
@@ -87,9 +89,11 @@
             this.buttonSave.TabIndex = 4;
             this.buttonSave.Text = "Save Images";
             this.buttonSave.UseVisualStyleBackColor = true;
+            this.buttonSave.Click += new System.EventHandler(this.buttonSave_Click);
             // 
             // mainForm
             // 
+            this.AcceptButton = this.buttonSearch;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
