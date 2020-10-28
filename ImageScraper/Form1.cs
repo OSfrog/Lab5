@@ -18,7 +18,9 @@ namespace ImageScraper
         }
 
         public Regex Pattern { get; set; }
-        public Task<byte[]> TaskArray { get; set; }
+        public List<byte[]> ByteList { get; set; }
+        public List<Task<byte[]>> TaskList { get; set; }
+
         private async void buttonSearch_Click(object sender, EventArgs e)
         {
             var downloadTask = DownloadHTML();
@@ -48,9 +50,8 @@ namespace ImageScraper
 
             if (dialog.ShowDialog() == DialogResult.OK)
             {
-
-                await SaveImages(DownloadImagesAsync(ImageURLs.ToArray()), dialog.SelectedPath);
-                //Task.WhenAny(TaskArray)
+                await DownloadImagesAsync(ImageURLs.ToArray());
+                await SaveImages(dialog.SelectedPath);
             }
         }
 
@@ -64,8 +65,8 @@ namespace ImageScraper
                 var client = new HttpClient();
                 Task<string> downloadHTML = null;
 
-                    downloadHTML = client.GetStringAsync($"http://{textBoxSearch.Text}");
-                    await downloadHTML;
+                downloadHTML = client.GetStringAsync($"http://{textBoxSearch.Text}");
+                await downloadHTML;
 
                 var matches = Pattern.Matches(downloadHTML.Result);
 
@@ -89,24 +90,27 @@ namespace ImageScraper
             }
         }
 
-        private async Task<byte[]> DownloadImagesAsync(string[] imagearray)
+        private async Task DownloadImagesAsync(string[] imagearray)
         {
             var client = new HttpClient();
-
             foreach (var image in imagearray)
             {
-                 TaskArray = client.GetByteArrayAsync(image);
+                TaskList.Add(client.GetByteArrayAsync(image));
             }
-
-            return await TaskArray;
         }
 
-        private async Task SaveImages(Task<byte[]> byteArray, string path)
+        private async Task SaveImages(string path)
         {
-            var fileStream = new FileStream(path, FileMode.Create);
+            var i = 1;
+            while (TaskList.Count > 0)
+            {
+                Task <byte[]> completedTask = await Task.WhenAny(TaskList);
+                var fileStream = new FileStream($"{path}\\image{i}", FileMode.Create);
+                await fileStream.WriteAsync(completedTask.Result, 0, completedTask.Result.Length);
+                i++;
 
-            var finishedTask = Task.WaitAny(byteArray);
-            
+
+            }
         }
     }
 }
