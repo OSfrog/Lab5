@@ -10,6 +10,7 @@ namespace ImageScraper
 {
     public partial class mainForm : Form
     {
+        public List<string> ImageURLs = new List<string>();
         public mainForm()
         {
             InitializeComponent();
@@ -17,7 +18,7 @@ namespace ImageScraper
         }
 
         public Regex Pattern { get; set; }
-        public List<string> ImageURLs = new List<string>();
+        public Task<byte[]> TaskArray { get; set; }
         private async void buttonSearch_Click(object sender, EventArgs e)
         {
             var downloadTask = DownloadHTML();
@@ -29,17 +30,27 @@ namespace ImageScraper
             var result = textBoxResults.Lines.Length == 0 ? $"No images found." :
                 $"{textBoxResults.Lines.Length} images found.";
 
+            if (textBoxResults.Lines.Length != 0)
+            {
+                buttonSave.Enabled = true;
+            }
+            else
+            {
+                buttonSave.Enabled = false;
+            }
             labelImages.Visible = true;
             labelImages.Text = result;
         }
 
-        private void buttonSave_Click(object sender, EventArgs e)
+        private async void buttonSave_Click(object sender, EventArgs e)
         {
             var dialog = new FolderBrowserDialog();
 
             if (dialog.ShowDialog() == DialogResult.OK)
             {
-                //Spara filerna till SelectedPath
+
+                await SaveImages(DownloadImagesAsync(ImageURLs.ToArray()), dialog.SelectedPath);
+                //Task.WhenAny(TaskArray)
             }
         }
 
@@ -51,8 +62,10 @@ namespace ImageScraper
                 !string.IsNullOrWhiteSpace(textBoxSearch.Text))
             {
                 var client = new HttpClient();
-                Task<string> downloadHTML = client.GetStringAsync($"http://{textBoxSearch.Text}");
-                await downloadHTML;
+                Task<string> downloadHTML = null;
+
+                    downloadHTML = client.GetStringAsync($"http://{textBoxSearch.Text}");
+                    await downloadHTML;
 
                 var matches = Pattern.Matches(downloadHTML.Result);
 
@@ -74,20 +87,26 @@ namespace ImageScraper
                     }
                 }
             }
-
-            var imageURLArray = ImageURLs.ToArray();
         }
 
-        private async Task DownloadImagesAsync(string[] imagearray, string path)
+        private async Task<byte[]> DownloadImagesAsync(string[] imagearray)
         {
             var client = new HttpClient();
-            var fileStream = new FileStream(path, FileMode.Create);
-            Task<Task[]> downloadedImage;
 
             foreach (var image in imagearray)
             {
-               client.GetByteArrayAsync(image);
+                 TaskArray = client.GetByteArrayAsync(image);
             }
+
+            return await TaskArray;
+        }
+
+        private async Task SaveImages(Task<byte[]> byteArray, string path)
+        {
+            var fileStream = new FileStream(path, FileMode.Create);
+
+            var finishedTask = Task.WaitAny(byteArray);
+            
         }
     }
 }
