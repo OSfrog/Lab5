@@ -66,6 +66,7 @@
             this.textBoxResults.ScrollBars = System.Windows.Forms.ScrollBars.Both;
             this.textBoxResults.Size = new System.Drawing.Size(791, 366);
             this.textBoxResults.TabIndex = 2;
+            this.textBoxResults.WordWrap = false;
             this.textBoxResults.TextChanged += new System.EventHandler(this.textBoxResults_TextChanged);
             // 
             // buttonSearch

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Text.RegularExpressions;
@@ -14,7 +15,7 @@ namespace ImageScraper
         public mainForm()
         {
             InitializeComponent();
-            UrlPattern = new Regex("<img.*src=\"(.*\\.(jpg|jpeg|png|gif|bmp).*)\"\\s");
+            UrlPattern = new Regex("<img.*src=\"(.*\\.(jpg|jpeg|png|gif|bmp).*?)\"\\s");
             FileExtensionPattern = new Regex("\\.(jpg|jpeg|png|gif|bmp)");
         }
 
@@ -24,7 +25,8 @@ namespace ImageScraper
 
         private async void buttonSearch_Click(object sender, EventArgs e)
         {
-            var downloadTask = DownloadHTML();
+            var downloadTask =  DownloadHTMLAsync();
+            await downloadTask;
         }
 
         private void textBoxResults_TextChanged(object sender, EventArgs e)
@@ -43,12 +45,11 @@ namespace ImageScraper
 
             if (dialog.ShowDialog() == DialogResult.OK)
             {
-                await DownloadImagesAsync(ImageURLs.ToArray());
-                await SaveImages(dialog.SelectedPath);
+                await DownloadAndSaveImages(ImageURLs.ToArray(), dialog.SelectedPath);
             }
         }
 
-        private async Task DownloadHTML()
+        private async Task DownloadHTMLAsync()
         {
             textBoxResults.Clear();
 
@@ -84,7 +85,7 @@ namespace ImageScraper
             }
         }
 
-        private async Task DownloadImagesAsync(string[] imagearray)
+        private async Task DownloadAndSaveImages(string[] imagearray, string path)
         {
              var client = new HttpClient();
 
@@ -93,18 +94,14 @@ namespace ImageScraper
                 var match = FileExtensionPattern.Matches(image);
                 TaskDictionary.Add(client.GetByteArrayAsync(image), match[0].Value);
             }
-        }
 
-        private async Task SaveImages(string path)
-        {
             var i = 1;
             var tasks = TaskDictionary.Keys;
-
             while (TaskDictionary.Count > 0)
             {
                 var completedTask = await Task.WhenAny(tasks);
                 var fileExtension = TaskDictionary[completedTask];
-                var result = await completedTask;
+                var result = completedTask.Result;
                 var fileStream = new FileStream($"{path}\\image{i}{fileExtension}", FileMode.Create);
                 await fileStream.WriteAsync(result, 0, result.Length);
                 i++;
