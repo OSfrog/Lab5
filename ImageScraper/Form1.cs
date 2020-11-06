@@ -11,7 +11,7 @@ namespace ImageScraper
 {
     public partial class MainForm : Form
     {
-        public List<string> ImageURLs = new List<string>();
+        private List<string> ImageURLs = new List<string>();
         public MainForm()
         {
             InitializeComponent();
@@ -19,9 +19,9 @@ namespace ImageScraper
             FileExtensionPattern = new Regex("\\.(jpg|jpeg|png|gif|bmp)");
         }
 
-        public Regex UrlPattern { get; set; }
-        public Regex FileExtensionPattern { get; set; }
-        public Dictionary<Task<byte[]>, string> TaskDictionary { get; set; } = new Dictionary<Task<byte[]>, string>();
+        private Regex UrlPattern { get; set; }
+        private Regex FileExtensionPattern { get; set; }
+        private Dictionary<Task<byte[]>, string> TaskDictionary { get; set; } = new Dictionary<Task<byte[]>, string>();
 
         private async void buttonSearch_Click(object sender, EventArgs e)
         {
