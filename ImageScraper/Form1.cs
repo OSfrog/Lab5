@@ -25,6 +25,7 @@ namespace ImageScraper
 
         private async void buttonSearch_Click(object sender, EventArgs e)
         {
+            ImageURLs.Clear();
             var downloadTask =  DownloadHTMLAsync();
             await downloadTask;
         }
@@ -32,7 +33,7 @@ namespace ImageScraper
         private void textBoxResults_TextChanged(object sender, EventArgs e)
         {
             var result = textBoxResults.Lines.Length == 0 ? $"No images found." :
-                $"{textBoxResults.Lines.Length} images found.";
+                $"{textBoxResults.Lines.Length - 1} images found.";
 
             buttonSave.Enabled = textBoxResults.Lines.Length != 0;
             labelImages.Visible = true;
@@ -56,7 +57,7 @@ namespace ImageScraper
             if (!textBoxSearch.Text.Contains("https://") &&
                 !string.IsNullOrWhiteSpace(textBoxSearch.Text))
             {
-                 var client = new HttpClient();
+                using var client = new HttpClient();
                 client.Timeout = TimeSpan.FromMinutes(1);
 
                 var downloadedHTMLCode = client.GetStringAsync($"http://{textBoxSearch.Text}");
@@ -87,7 +88,7 @@ namespace ImageScraper
 
         private async Task DownloadAndSaveImages(string[] imagearray, string path)
         {
-             var client = new HttpClient();
+            using var client = new HttpClient();
 
             foreach (var image in imagearray)
             {
