@@ -1,6 +1,6 @@
 ﻿namespace ImageScraper
 {
-    partial class mainForm
+    partial class MainForm
     {
         /// <summary>
         /// Required designer variable.
@@ -104,7 +104,7 @@
             this.Controls.Add(this.textBoxResults);
             this.Controls.Add(this.textBoxSearch);
             this.Controls.Add(this.labelImages);
-            this.Name = "mainForm";
+            this.Name = "MainForm";
             this.ShowIcon = false;
             this.Text = "ImageScraper";
             this.ResumeLayout(false);
