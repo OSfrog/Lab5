@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -55,16 +54,20 @@ namespace ImageScraper
         {
             textBoxResults.Clear();
 
-            if (textBoxSearch.Text.Contains("http://") ||
-                string.IsNullOrWhiteSpace(textBoxSearch.Text))
+            if (string.IsNullOrWhiteSpace(textBoxSearch.Text))
             {
                 return;
             }
 
-            using var client = new HttpClient();
-            client.Timeout = TimeSpan.FromMinutes(1);
+            var url = textBoxSearch.Text;
+            if (!url.Contains("http://"))
+            {
+                url = $"http://{url}";
+            }
 
-            var downloadedHTMLCode = client.GetStringAsync($"http://{textBoxSearch.Text}");
+            using var client = new HttpClient();
+
+            var downloadedHTMLCode = client.GetStringAsync(url);
             await downloadedHTMLCode;
 
             var matches = UrlPattern.Matches(downloadedHTMLCode.Result);
@@ -80,7 +83,7 @@ namespace ImageScraper
                 var urlWithProtocol = "";
                 if (!matchValue.Contains("http"))
                 {
-                    urlWithProtocol = $"http://{textBoxSearch.Text}";
+                    urlWithProtocol = url;
                 }
 
                 textBoxResults.Text += $"{urlWithProtocol}{matchValue}{Environment.NewLine}";
@@ -105,7 +108,7 @@ namespace ImageScraper
                 var completedTask = await Task.WhenAny(tasks);
                 var fileExtension = TaskDictionary[completedTask];
                 var result = completedTask.Result;
-                var fileStream = new FileStream($"{path}\\image{i}{fileExtension}", FileMode.Create);
+                using var fileStream = new FileStream($"{path}\\image{i}{fileExtension}", FileMode.Create);
                 await fileStream.WriteAsync(result, 0, result.Length);
                 i++;
                 TaskDictionary.Remove(completedTask);
