@@ -9,19 +9,19 @@ using System.Windows.Forms;
 
 namespace ImageScraper
 {
-    public partial class mainForm : Form
+    public partial class MainForm : Form
     {
-        public List<string> ImageURLs = new List<string>();
-        public mainForm()
+        private List<string> ImageURLs = new List<string>();
+        public MainForm()
         {
             InitializeComponent();
-            UrlPattern = new Regex("<img.*src=\"(.*\\.(jpg|jpeg|png|gif|bmp).*?)\"\\s");
+            UrlPattern = new Regex("<img.*src=\"(.*?\\.(jpg|jpeg|png|gif|bmp).*?)\"");
             FileExtensionPattern = new Regex("\\.(jpg|jpeg|png|gif|bmp)");
         }
 
-        public Regex UrlPattern { get; set; }
-        public Regex FileExtensionPattern { get; set; }
-        public Dictionary<Task<byte[]>, string> TaskDictionary { get; set; } = new Dictionary<Task<byte[]>, string>();
+        private Regex UrlPattern { get;}
+        private Regex FileExtensionPattern { get;}
+        private Dictionary<Task<byte[]>, string> TaskDictionary { get; } = new Dictionary<Task<byte[]>, string>();
 
         private async void buttonSearch_Click(object sender, EventArgs e)
         {
@@ -53,7 +53,7 @@ namespace ImageScraper
         {
             textBoxResults.Clear();
 
-            if (!textBoxSearch.Text.Contains("http://") &&
+            if (!textBoxSearch.Text.Contains("https://") &&
                 !string.IsNullOrWhiteSpace(textBoxSearch.Text))
             {
                  var client = new HttpClient();
