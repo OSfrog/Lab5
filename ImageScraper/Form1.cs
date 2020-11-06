@@ -9,10 +9,10 @@ using System.Windows.Forms;
 
 namespace ImageScraper
 {
-    public partial class mainForm : Form
+    public partial class MainForm : Form
     {
         public List<string> ImageURLs = new List<string>();
-        public mainForm()
+        public MainForm()
         {
             InitializeComponent();
             UrlPattern = new Regex("<img.*src=\"(.*?\\.(jpg|jpeg|png|gif|bmp).*?)\"");
