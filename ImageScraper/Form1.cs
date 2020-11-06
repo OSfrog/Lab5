@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -26,8 +26,7 @@ namespace ImageScraper
         private async void buttonSearch_Click(object sender, EventArgs e)
         {
             ImageURLs.Clear();
-            var downloadTask =  DownloadHTMLAsync();
-            await downloadTask;
+            await DownloadHTMLAsync();
         }
 
         private void textBoxResults_TextChanged(object sender, EventArgs e)
@@ -44,45 +43,48 @@ namespace ImageScraper
         {
             var dialog = new FolderBrowserDialog();
 
-            if (dialog.ShowDialog() == DialogResult.OK)
+            if (dialog.ShowDialog() != DialogResult.OK)
             {
-                await DownloadAndSaveImages(ImageURLs.ToArray(), dialog.SelectedPath);
+                return;
             }
+
+            await DownloadAndSaveImages(ImageURLs.ToArray(), dialog.SelectedPath);
         }
 
         private async Task DownloadHTMLAsync()
         {
             textBoxResults.Clear();
 
-            if (!textBoxSearch.Text.Contains("http://") &&
-                !string.IsNullOrWhiteSpace(textBoxSearch.Text))
+            if (textBoxSearch.Text.Contains("http://") ||
+                string.IsNullOrWhiteSpace(textBoxSearch.Text))
             {
-                using var client = new HttpClient();
-                client.Timeout = TimeSpan.FromMinutes(1);
+                return;
+            }
 
-                var downloadedHTMLCode = client.GetStringAsync($"http://{textBoxSearch.Text}");
-                await downloadedHTMLCode;
+            using var client = new HttpClient();
+            client.Timeout = TimeSpan.FromMinutes(1);
 
-                var matches = UrlPattern.Matches(downloadedHTMLCode.Result);
+            var downloadedHTMLCode = client.GetStringAsync($"http://{textBoxSearch.Text}");
+            await downloadedHTMLCode;
 
+            var matches = UrlPattern.Matches(downloadedHTMLCode.Result);
 
-                foreach (Match match in matches)
+            foreach (Match match in matches)
+            {
+                var matchValue = match.Groups[1].ToString();
+                if (string.IsNullOrWhiteSpace(matchValue))
                 {
-                    if (!match.Groups[1].ToString().Contains("http") &&
-                        !string.IsNullOrWhiteSpace(match.ToString()))
-                    {
-                        var result = $"http://{textBoxSearch.Text}{match.Groups[1]}{Environment.NewLine}";
-                        textBoxResults.Text += result;
-
-                        ImageURLs.Add($"http://{textBoxSearch.Text}{match.Groups[1]}");
-                    }
-                    else if (!string.IsNullOrWhiteSpace(match.Groups[1].ToString()))
-                    {
-                        textBoxResults.Text += $"{match.Groups[1]} {Environment.NewLine}";
-
-                        ImageURLs.Add($"{match.Groups[1]}");
-                    }
+                    continue;
                 }
+
+                var urlWithProtocol = "";
+                if (!matchValue.Contains("http"))
+                {
+                    urlWithProtocol = $"http://{textBoxSearch.Text}";
+                }
+
+                textBoxResults.Text += $"{urlWithProtocol}{matchValue}{Environment.NewLine}";
+                ImageURLs.Add($"{urlWithProtocol}{matchValue}");
             }
         }
 
